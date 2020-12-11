@@ -317,60 +317,39 @@ ggjobs %>%
 ```
 
 
-Map
+Maps
 =======================================================================
+Column {data-width=400}
+-------------------------------------
 
-### **World map of cases** (*use + and - icons to zoom in/out*)
+### **US map of unemployment**
 
-```{r}
-# map tab added by Art Steinmetz
-library(leaflet)
-library(leafpop)
-library(purrr)
-cv_data_for_plot <- coronavirus %>%
-  # dplyr::filter(country == "US") %>%
-  dplyr::filter(cases > 0) %>%
-  dplyr::group_by(country, province, lat, long, type) %>%
-  dplyr::summarise(cases = sum(cases)) %>%
-  dplyr::mutate(log_cases = 2 * log(cases)) %>%
-  dplyr::ungroup()
-cv_data_for_plot.split <- cv_data_for_plot %>% split(cv_data_for_plot$type)
-pal <- colorFactor(c("orange", "red", "green"), domain = c("confirmed", "death", "recovered"))
-map_object <- leaflet() %>% addProviderTiles(providers$Stamen.Toner)
-names(cv_data_for_plot.split) %>%
-  purrr::walk(function(df) {
-    map_object <<- map_object %>%
-      addCircleMarkers(
-        data = cv_data_for_plot.split[[df]],
-        lng = ~long, lat = ~lat,
-        #                 label=~as.character(cases),
-        color = ~ pal(type),
-        stroke = FALSE,
-        fillOpacity = 0.8,
-        radius = ~log_cases,
-        popup = leafpop::popupTable(cv_data_for_plot.split[[df]],
-          feature.id = FALSE,
-          row.numbers = FALSE,
-          zcol = c("type", "cases", "country", "province")
-        ),
-        group = df,
-        #                 clusterOptions = markerClusterOptions(removeOutsideVisibleBounds = F),
-        labelOptions = labelOptions(
-          noHide = F,
-          direction = "auto"
-        )
-      )
-  })
+```{r unemploymentmap, echo=FALSE}
 
-map_object %>%
-  addLayersControl(
-    overlayGroups = names(cv_data_for_plot.split),
-    options = layersControlOptions(collapsed = FALSE)
-  )
+library(blscrapeR)
+# Grap the data in a pre-formatted data frame.
+# If no argument is passed to the function it will load the most recent month's data.
+df_map <- get_bls_state()
+
+#Use map function with arguments.
+map_bls(map_data = df_map, fill_rate = "unemployed_rate", 
+               labtitle = "Unemployment Rate by State")
 ```
 
+### **US map of labor force**
 
+```{r jobsmap, echo=FALSE}
 
+library(blscrapeR)
+# Grap the data in a pre-formatted data frame.
+# If no argument is passed to the function it will load the most recent month's data.
+#df_map <- get_bls_state()
+
+#Use map function with arguments.
+map_bls(map_data = df_map, fill_rate = "labor_force_rate", 
+               labtitle = "Labor Force Rate by State")
+
+```
 
 
 About
@@ -388,7 +367,7 @@ The code behind this dashboard is available on [GitHub](https://github.com/ruanm
 
 The data and dashboard are dynamically refreshed (what you see is not static data).
 
-The raw data used as input for the dashboards is extracted from the Johns Hopkins University Center for Systems Science and Engineering (JHU CCSE) Coronavirus [database](https://github.com/RamiKrispin/coronavirus-csv){target="_blank"} and U.S. Bureau Of Labor Statistics (blsAPI) [database](https://www.bls.gov/developers/api_r.htm){target="_blank"} 
+The raw data used as input for the dashboards is extracted from the Johns Hopkins University Center for Systems Science and Engineering (JHU CCSE) Coronavirus [database](https://github.com/RamiKrispin/coronavirus){target="_blank"} and U.S. Bureau Of Labor Statistics (blsAPI) [database](https://www.bls.gov/developers/api_r.htm){target="_blank"} 
 
 **Information**
 
