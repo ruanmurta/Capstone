@@ -1,0 +1,404 @@
+---
+title: "COVID-19 Effects on the US Labor Market"
+author: "Ruan Almeida"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    # social: ["facebook", "twitter", "linkedin"]
+    source_code: embed
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+#------------------ Packages ------------------
+library(flexdashboard)
+# install.packages("devtools")
+# devtools::install_github("RamiKrispin/coronavirus", force = TRUE)
+library(coronavirus)
+data(coronavirus)
+# View(coronavirus)
+# max(coronavirus$date)
+
+`%>%` <- magrittr::`%>%`
+#------------------ Parameters ------------------
+# Set colors
+# https://www.w3.org/TR/css-color-3/#svg-color
+confirmed_color <- "purple"
+active_color <- "#1f77b4"
+recovered_color <- "forestgreen"
+death_color <- "red"
+#------------------ Data ------------------
+df <- coronavirus %>%
+  # dplyr::filter(date == max(date)) %>%
+  dplyr::filter(country == "US") %>%
+  dplyr::group_by(country, type) %>%
+  dplyr::summarise(total = sum(cases)) %>%
+  tidyr::pivot_wider(
+    names_from = type,
+    values_from = total
+  ) %>%
+  # dplyr::mutate(unrecovered = confirmed - ifelse(is.na(recovered), 0, recovered) - ifelse(is.na(death), 0, death)) %>%
+  dplyr::mutate(unrecovered = confirmed - ifelse(is.na(death), 0, death)) %>%
+  dplyr::arrange(-confirmed) %>%
+  dplyr::ungroup() %>%
+  dplyr::mutate(country = dplyr::if_else(country == "United Arab Emirates", "UAE", country)) %>%
+  dplyr::mutate(country = dplyr::if_else(country == "Mainland China", "China", country)) %>%
+  dplyr::mutate(country = dplyr::if_else(country == "North Macedonia", "N.Macedonia", country)) %>%
+  dplyr::mutate(country = trimws(country)) %>%
+  dplyr::mutate(country = factor(country, levels = country))
+
+df_daily <- coronavirus %>%
+  dplyr::filter(country == "US") %>%
+  dplyr::group_by(date, type) %>%
+  dplyr::summarise(total = sum(cases, na.rm = TRUE)) %>%
+  tidyr::pivot_wider(
+    names_from = type,
+    values_from = total
+  ) %>%
+  dplyr::arrange(date) %>%
+  dplyr::ungroup() %>%
+  #dplyr::mutate(active = confirmed - death - recovered) %>%
+  dplyr::mutate(active = confirmed - death) %>%
+  dplyr::mutate(
+    confirmed_cum = cumsum(confirmed),
+    death_cum = cumsum(death),
+    # recovered_cum = cumsum(recovered),
+    active_cum = cumsum(active)
+  )
+
+
+df1 <- coronavirus %>% dplyr::filter(date == max(date))
+```
+
+COVID-19
+=======================================================================
+
+Row {data-width=400}
+-----------------------------------------------------------------------
+
+### confirmed {.value-box}
+
+```{r}
+
+valueBox(
+  value = paste(format(sum(df$confirmed), big.mark = ","), "", sep = " "),
+  caption = "Total confirmed cases",
+  icon = "fas fa-user-md",
+  color = confirmed_color
+)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### death {.value-box}
+
+```{r}
+
+valueBox(
+  value = paste(format(sum(df$death, na.rm = TRUE), big.mark = ","), " (",
+    round(100 * sum(df$death, na.rm = TRUE) / sum(df$confirmed), 1),
+    "%)",
+    sep = ""
+  ),
+  caption = "Death cases (death rate)",
+  icon = "fas fa-heart-broken",
+  color = death_color
+)
+```
+
+
+Row
+-----------------------------------------------------------------------
+
+### **Daily cumulative cases by type** (US only)
+    
+```{r}
+plotly::plot_ly(data = df_daily) %>%
+  plotly::add_trace(
+    x = ~date,
+    # y = ~active_cum,
+    y = ~confirmed_cum,
+    type = "scatter",
+    mode = "lines+markers",
+    # name = "Active",
+    name = "Confirmed",
+    line = list(color = active_color),
+    marker = list(color = active_color)
+  ) %>%
+  plotly::add_trace(
+    x = ~date,
+    y = ~death_cum,
+    type = "scatter",
+    mode = "lines+markers",
+    name = "Death",
+    line = list(color = death_color),
+    marker = list(color = death_color)
+  ) %>%
+  # plotly::add_annotations(
+  #   x = as.Date("2020-02-04"),
+  #   y = 1,
+  #   text = paste("First case"),
+  #   xref = "x",
+  #   yref = "y",
+  #   arrowhead = 5,
+  #   arrowhead = 3,
+  #   arrowsize = 1,
+  #   showarrow = TRUE,
+  #   ax = -10,
+  #   ay = -90
+  # ) %>%
+  plotly::add_annotations(
+    x = as.Date("2020-03-11"),
+    y = 3,
+    text = paste("First death"),
+    xref = "x",
+    yref = "y",
+    arrowhead = 5,
+    arrowhead = 3,
+    arrowsize = 1,
+    showarrow = TRUE,
+    ax = -90,
+    ay = -90
+  ) %>%
+  plotly::add_annotations(
+    x = as.Date("2020-03-18"),
+    y = 14,
+    text = paste(
+      "Lockdown"
+    ),
+    xref = "x",
+    yref = "y",
+    arrowhead = 5,
+    arrowhead = 3,
+    arrowsize = 1,
+    showarrow = TRUE,
+    ax = -10,
+    ay = -90
+  ) %>%
+  plotly::layout(
+    title = "",
+    yaxis = list(title = "Cumulative number of cases"),
+    xaxis = list(title = "Date"),
+    legend = list(x = 0.1, y = 0.9),
+    hovermode = "compare"
+  )
+```
+
+Labor Market 
+=======================================================================
+
+```{r BLSrates}
+
+library(blscrapeR)
+library(ggplot2)
+
+#Key Install intructions
+#library(blscrapeR)
+#set_bls_key("YOUR_KEY_IN_QUOTATIONS")
+# First time, reload your enviornment so you can use the key without restarting R.
+#readRenviron("~/.Renviron")
+# You can check it with:
+#Sys.getenv("BLS_KEY")
+
+# Extracting different datasets from BLS, using my personal access ID
+# NOTE on series IDs: 
+# UNEMPLOYMENT RATE - Civilian labor force - LNS14000000
+# JOB OPENINGS RATE, Total nonfarm - JTU000000000000000JOR
+df_rates <- bls_api(c("LNS14000000", "JTU000000000000000JOR"),
+              startyear = 2019, endyear = 2020, Sys.getenv("98768e2ab6474836a2583fbbca4e7d75")) %>%
+  # Add time-series dates
+  dateCast()
+```
+
+
+Column {data-width=400}
+-------------------------------------
+
+
+### **US Unemployment Rate (civilian labor force) dashboard**
+    
+
+```{r unemployment}
+# Slicing the dataset with data only related to unemployment rate
+ggunemployment <- subset(df_rates, seriesID=="LNS14000000")
+
+# Plotting the data
+ggunemployment %>%
+  plotly::plot_ly() %>%
+  plotly::add_trace(
+    x = ~date,
+    y = ~value,
+    type = "scatter",
+    mode = "lines+markers",
+    line = list(color = 'red'),
+    name = "UNEMPLOYMENT"
+  ) %>%
+
+  plotly::layout(
+    title = "",
+    legend = list(x = 0.7, y = 0.9),
+    yaxis = list(title = "Rate"),
+    xaxis = list(title = "Date"),
+    # paper_bgcolor = "black",
+    # plot_bgcolor = "black",
+    # font = list(color = 'red'),
+    hovermode = "compare",
+    margin = list(
+      # l = 60,
+      # r = 40,
+      b = 10,
+      t = 10,
+      pad = 2
+    )
+  )
+
+#library(ggplot2)
+#ggplot(ggunemployment, aes(x=date, y=value)) +
+#  geom_line() +
+#  labs(title = "UNEMPLOYMENT (RATE)")
+
+```
+ 
+### **US Job Openings Rate (total nonfarm) dashboard**
+
+```{r job}
+
+# Slicing the dataset with data only related to job openings rate
+ggjobs <- subset(df_rates, seriesID=="JTU000000000000000JOR")
+
+# Plotting the data
+ggjobs %>%
+  plotly::plot_ly() %>%
+  plotly::add_trace(
+    x = ~date,
+    y = ~value,
+    type = "scatter",
+    mode = "lines+markers",
+    line = list(color = 'forestgreen'),
+    name = "JOB OPENING"
+  ) %>%
+
+  plotly::layout(
+    title = "",
+    legend = list(x = 0.7, y = 0.9),
+    yaxis = list(title = "Rate"),
+    xaxis = list(title = "Date"),
+    # paper_bgcolor = "black",
+    # plot_bgcolor = "black",
+    # font = list(color = 'green'),
+    hovermode = "compare",
+    margin = list(
+      # l = 60,
+      # r = 40,
+      b = 10,
+      t = 10,
+      pad = 2
+    )
+  )
+
+#library(ggplot2)
+#ggplot(ggjobs, aes(x=date, y=value)) +
+#  geom_line() +
+#  labs(title = "JOB OPENINGS (RATE)")
+
+```
+
+
+Map
+=======================================================================
+
+### **World map of cases** (*use + and - icons to zoom in/out*)
+
+```{r}
+# map tab added by Art Steinmetz
+library(leaflet)
+library(leafpop)
+library(purrr)
+cv_data_for_plot <- coronavirus %>%
+  # dplyr::filter(country == "US") %>%
+  dplyr::filter(cases > 0) %>%
+  dplyr::group_by(country, province, lat, long, type) %>%
+  dplyr::summarise(cases = sum(cases)) %>%
+  dplyr::mutate(log_cases = 2 * log(cases)) %>%
+  dplyr::ungroup()
+cv_data_for_plot.split <- cv_data_for_plot %>% split(cv_data_for_plot$type)
+pal <- colorFactor(c("orange", "red", "green"), domain = c("confirmed", "death", "recovered"))
+map_object <- leaflet() %>% addProviderTiles(providers$Stamen.Toner)
+names(cv_data_for_plot.split) %>%
+  purrr::walk(function(df) {
+    map_object <<- map_object %>%
+      addCircleMarkers(
+        data = cv_data_for_plot.split[[df]],
+        lng = ~long, lat = ~lat,
+        #                 label=~as.character(cases),
+        color = ~ pal(type),
+        stroke = FALSE,
+        fillOpacity = 0.8,
+        radius = ~log_cases,
+        popup = leafpop::popupTable(cv_data_for_plot.split[[df]],
+          feature.id = FALSE,
+          row.numbers = FALSE,
+          zcol = c("type", "cases", "country", "province")
+        ),
+        group = df,
+        #                 clusterOptions = markerClusterOptions(removeOutsideVisibleBounds = F),
+        labelOptions = labelOptions(
+          noHide = F,
+          direction = "auto"
+        )
+      )
+  })
+
+map_object %>%
+  addLayersControl(
+    overlayGroups = names(cv_data_for_plot.split),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+```
+
+
+
+
+
+About
+=======================================================================
+
+**COVID-19 Effects on the US Labor Market - The Monitoring App**
+
+This Monitoring Application provides an overview of the situation of the US labor market (unemployment and job opening rates) in face of 2019 Novel Coronavirus COVID-19 (2019-nCoV) pandemic. This dashboard is built with R using the R Makrdown framework and was adapted from this [dashboard](https://ramikrispin.github.io/coronavirus_dashboard/){target="_blank"} by Rami Krispin.
+
+**Code**
+
+The code behind this dashboard is available on [GitHub](https://github.com/ruanmurta/Capstone){target="_blank"}.
+
+**Data**
+
+The data and dashboard are dynamically refreshed (what you see is not static data).
+
+The raw data used as input for the dashboards is extracted from the Johns Hopkins University Center for Systems Science and Engineering (JHU CCSE) Coronavirus [database](https://github.com/RamiKrispin/coronavirus-csv){target="_blank"} and U.S. Bureau Of Labor Statistics (blsAPI) [database](https://www.bls.gov/developers/api_r.htm){target="_blank"} 
+
+**Information**
+
+More information about this dashboard and my research can be found in this [article](https://www.linkedin.com/in/ruanmurta/).
+
+**Update**
+
+The data is as of `r format(max(coronavirus$date), "%A %B %d, %Y")` and the dashboard has been updated on `r format(Sys.time(), "%A %B %d, %Y")`.
+
+
+
+* [About Ruan Almeida](https://about.me/ruan_almeida)*.
+
