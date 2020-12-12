@@ -1,2 +1,2 @@
 # Capstone
-COVID-19 Effects on the US Labor Market - RMarkdown Dashboard
+COVID-19 Effects on the US Labor Market - Monitoring Application
