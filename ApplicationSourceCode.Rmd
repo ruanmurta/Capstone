@@ -195,13 +195,13 @@ library(ggplot2)
 # You can check it with:
 #Sys.getenv("BLS_KEY")
 
-# Extracting different datasets from BLS, using my personal access ID
+# Extracting different datasets from BLS
 # NOTE on series IDs: 
 # UNEMPLOYMENT RATE - Civilian labor force - LNS14000000
 # JOB OPENINGS RATE, Total nonfarm - JTU000000000000000JOR
 df_rates <- bls_api(c("LNS14000000", "JTU000000000000000JOR"),
-              startyear = 2019, endyear = 2020, Sys.getenv("d7f7e9a712934deb9c4899dc4242ff59")) %>% 
-# Above I used my personal key. You need to create your own access key for blsAPI
+              startyear = 2019, endyear = 2020, Sys.getenv("YOUR-KEY")) %>% 
+# Above I used my personal key in order to make the system work. You need to create your own access key for blsAPI
 # Here is the link: https://data.bls.gov/registrationEngine/  
   dateCast() # Add time-series dates
 ```
