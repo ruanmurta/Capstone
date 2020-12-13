@@ -14,6 +14,8 @@ The data and dashboard are dynamically refreshed (what you see is not static dat
 
 The raw data used as input for the dashboards is extracted from the Johns Hopkins University Center for Systems Science and Engineering (JHU CCSE) Coronavirus database and U.S. Bureau Of Labor Statistics (blsAPI) database
 
+IMPORTANT: I used my personal key to access the U.S. Bureau Of Labor Statistics database. You need to create your own access key for blsAPI. Here is the link: https://data.bls.gov/registrationEngine/  
+
 
 Information
 
