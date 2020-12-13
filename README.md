@@ -23,4 +23,5 @@ Course Policy on Publication & Dissemination: The final results of the research 
 
 My research paper is also available here: https://www.linkedin.com/in/ruanmurta/detail/treasury/education:694665217/?entityUrn=urn%3Ali%3Afsd_profileTreasuryMedia%3A(ACoAAAM4EPMBx-BwTPX9umxOR0P-HWMTcwQ3qyg%2C1607751278508)&section=education%3A694665217&treasuryCount=1
 
-about.me/ruan_almeida
+https://about.me/ruan_almeida
+
