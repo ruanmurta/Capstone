@@ -21,7 +21,7 @@ This application was developed as a part of the Computer Science Capstone course
 
 Course Policy on Publication & Dissemination: The final results of the research project are open to the public and available at CityU School of Technology & Computing (STC) Capstone Repository.
 
-My research paper is also available here: https://www.linkedin.com/in/ruanmurta/detail/treasury/education:694665217/?entityUrn=urn%3Ali%3Afsd_profileTreasuryMedia%3A(ACoAAAM4EPMBx-BwTPX9umxOR0P-HWMTcwQ3qyg%2C1607751278508)&section=education%3A694665217&treasuryCount=1
+My research paper is also available here: https://www.linkedin.com/in/ruanmurta/detail/treasury/education:694665217/?entityUrn=urn%3Ali%3Afsd_profileTreasuryMedia%3A(ACoAAAM4EPMBx-BwTPX9umxOR0P-HWMTcwQ3qyg%2C1607852682218)&section=education%3A694665217&treasuryCount=2
 
 https://about.me/ruan_almeida
 
